@@ -7,6 +7,7 @@ class Linear(Module):
     """
     Applies linear (affine) transformation of data: y = x W^T + b
     """
+
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
         """
         :param in_features: input vector features
@@ -27,8 +28,9 @@ class Linear(Module):
         :param input: array of shape (batch_size, in_features)
         :return: array of shape (batch_size, out_features)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        if self.bias is not None:
+            return input @ self.weight.T + self.bias
+        return input @ self.weight.T
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -36,16 +38,17 @@ class Linear(Module):
         :param grad_output: array of shape (batch_size, out_features)
         :return: array of shape (batch_size, in_features)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        return grad_output @ self.weight
 
     def update_grad_parameters(self, input: np.array, grad_output: np.array):
         """
         :param input: array of shape (batch_size, in_features)
         :param grad_output: array of shape (batch_size, out_features)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        super().update_grad_parameters(input, grad_output)
+        self.grad_weight += grad_output.T @ input
+
+        if self.grad_bias is not None:
+            self.grad_bias += grad_output.sum(axis=0)
 
     def zero_grad(self):
         self.grad_weight.fill(0)
@@ -74,6 +77,7 @@ class BatchNormalization(Module):
     """
     Applies batch normalization transformation
     """
+
     def __init__(self, num_features: int, eps: float = 1e-5, momentum: float = 0.1, affine: bool = True):
         """
         :param num_features:
@@ -108,25 +112,51 @@ class BatchNormalization(Module):
         :param input: array of shape (batch_size, num_features)
         :return: array of shape (batch_size, num_features)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        batch_size = input.shape[0]
 
+        # Training
+        if self.training:
+            self.mean = input.mean(axis=0)
+            self.input_mean = input - self.mean
+            self.var = input.var(axis=0)
+            self.inv_sqrt_var = 1 / np.sqrt(self.var + self.eps)
+            self.norm_input = self.input_mean * self.inv_sqrt_var
+
+            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * self.mean
+            self.running_var = (1 - self.momentum) * self.running_var + \
+                               self.momentum * (batch_size / (batch_size - 1)) * self.var
+        else:
+            # Evaluation
+            self.norm_input = (input - self.running_mean) / np.sqrt(self.running_var + self.eps)
+
+        if not self.affine:
+            return self.norm_input
+
+        return self.weight * self.norm_input + self.bias
+
+    # https://arxiv.org/pdf/1502.03167v3.pdf
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
         :param input: array of shape (batch_size, num_features)
         :param grad_output: array of shape (batch_size, num_features)
         :return: array of shape (batch_size, num_features)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        batch_size = input.shape[0]
+        df_xhat = grad_output * (self.weight if self.affine else np.ones(input.shape[1]))
+
+        # Training
+        if self.training:
+            return self.inv_sqrt_var / batch_size * (batch_size * df_xhat - df_xhat.sum(axis=0) - self.norm_input * (df_xhat * self.norm_input).sum(axis=0))
+        return df_xhat / np.sqrt(self.running_var + self.eps)
 
     def update_grad_parameters(self, input: np.array, grad_output: np.array):
         """
         :param input: array of shape (batch_size, num_features)
         :param grad_output: array of shape (batch_size, num_features)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        super().update_grad_parameters(input, grad_output)
+        if self.affine:
+            self.grad_weight += (grad_output * self.norm_input).sum(axis=0)
+            self.grad_bias += grad_output.sum(axis=0)
 
     def zero_grad(self):
         if self.affine:
@@ -148,6 +178,7 @@ class Dropout(Module):
     """
     Applies dropout transformation
     """
+
     def __init__(self, p=0.5):
         super().__init__()
         assert 0 <= p < 1
@@ -159,8 +190,10 @@ class Dropout(Module):
         :param input: array of an arbitrary size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        self.mask = np.random.binomial(1, 1 - self.p, input.shape)
+        if self.training:
+            return self.mask * input / (1 - self.p)
+        return input
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -168,8 +201,9 @@ class Dropout(Module):
         :param grad_output: array of the same size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        if self.training:
+            return grad_output * self.mask / (1 - self.p)
+        return grad_output
 
     def __repr__(self) -> str:
         return f'Dropout(p={self.p})'
@@ -179,6 +213,7 @@ class Sequential(Module):
     """
     Container for consecutive application of modules
     """
+
     def __init__(self, *args):
         super().__init__()
         self.modules = list(args)
@@ -188,8 +223,9 @@ class Sequential(Module):
         :param input: array of size matching the input size of the first layer
         :return: array of size matching the output size of the last layer
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        for module in self.modules:
+            input = module.forward(input)
+        return input
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -197,8 +233,9 @@ class Sequential(Module):
         :param grad_output: array of size matching the output size of the last layer
         :return: array of size matching the input size of the first layer
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        for i in range(len(self.modules) - 1, 0, -1):
+            grad_output = self.modules[i].backward(self.modules[i - 1].output, grad_output)
+        return self.modules[0].backward(input, grad_output)
 
     def __getitem__(self, item):
         return self.modules[item]

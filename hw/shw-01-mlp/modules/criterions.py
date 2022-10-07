@@ -14,8 +14,7 @@ class MSELoss(Criterion):
         :return: loss value
         """
         assert input.shape == target.shape, 'input and target shapes not matching'
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input, target)
+        return ((input - target)**2).sum() / input.shape[0] / input.shape[1]
 
     def compute_grad_input(self, input: np.array, target: np.array) -> np.array:
         """
@@ -24,8 +23,7 @@ class MSELoss(Criterion):
         :return: array of size (batch_size, *)
         """
         assert input.shape == target.shape, 'input and target shapes not matching'
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, target)
+        return 2 * (input - target) / input.shape[0] / input.shape[1]
 
 
 class CrossEntropyLoss(Criterion):
@@ -42,8 +40,8 @@ class CrossEntropyLoss(Criterion):
         :param target: labels array of size (batch_size, )
         :return: loss value
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input, target)
+        probs = self.log_softmax.compute_output(input)
+        return -probs[np.arange(input.shape[0]), target.ravel()].mean()
 
     def compute_grad_input(self, input: np.array, target: np.array) -> np.array:
         """
@@ -51,5 +49,6 @@ class CrossEntropyLoss(Criterion):
         :param target: labels array of size (batch_size, )
         :return: array of size (batch_size, num_classes)
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, target)
+        grad_output = np.zeros(input.shape)
+        grad_output[np.arange(input.shape[0]), target.ravel()] = -1 / input.shape[0]
+        return self.log_softmax.compute_grad_input(input, grad_output)

@@ -34,7 +34,10 @@ class SGD(Optimizer):
             hint: consider using np.add(..., out=m) for in place addition,
               i.e. we need to change original array, not its copy
             """
-            pass
+            g_t = grad
+
+            if self.weight_decay > 0:
+                g_t = g_t + self.weight_decay * param
 
 
 class Adam(Optimizer):

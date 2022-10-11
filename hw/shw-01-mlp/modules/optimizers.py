@@ -34,10 +34,9 @@ class SGD(Optimizer):
             hint: consider using np.add(..., out=m) for in place addition,
               i.e. we need to change original array, not its copy
             """
-            g_t = grad
-
-            if self.weight_decay > 0:
-                g_t = g_t + self.weight_decay * param
+            gt = grad + self.weight_decay * param
+            np.add(self.momentum * m, gt, out=m)
+            np.subtract(param, self.lr * gt, out=param)
 
 
 class Adam(Optimizer):
@@ -80,4 +79,9 @@ class Adam(Optimizer):
             hint: consider using np.add(..., out=m) for in place addition,
               i.e. we need to change original array, not its copy
             """
-            pass
+            gt = grad + self.weight_decay * param
+            np.add(self.beta1 * m, (1 - self.beta1) * gt, out=m)
+            np.add(self.beta2 * v, (1 - self.beta2) * gt**2, out=v)
+            m_hat = m / (1 - self.beta1**t)
+            v_hat = v / (1 - self.beta2**t)
+            np.add(param, -self.lr * m_hat / (np.sqrt(v_hat) + self.eps), out=param)

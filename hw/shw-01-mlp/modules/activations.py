@@ -74,6 +74,7 @@ class Softmax(Module):
         # y * (D - v^t * v) = y * D - (y * v^t) * v
         return grad_output * softmax - softmax * (grad_output * softmax).sum(axis=1).reshape(-1, 1)
 
+
 class LogSoftmax(Module):
     """
     Applies LogSoftmax operator over the last dimension

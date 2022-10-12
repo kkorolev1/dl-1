@@ -17,8 +17,8 @@ random_seed = 7
 
 
 def test_optimizer(custom_opt, torch_opt, opt_kwargs,
-                    in_features=10, out_features=20, batch_size=128,
-                    outer_iters=20, inner_iters=10, random_seed=None):
+                   in_features=10, out_features=20, batch_size=128,
+                   outer_iters=20, inner_iters=10, random_seed=None):
     if random_seed is not None:
         np.random.seed(random_seed)
 
@@ -42,7 +42,7 @@ def test_optimizer(custom_opt, torch_opt, opt_kwargs,
         debug_msg = f'Error in {custom_opt.__name__} in '
 
         for param1, param2 in zip(module1.parameters(), module2.parameters()):
-            param2.data = torch.from_numpy(param1)
+            param2.data = torch.from_numpy(np.copy(param1))
 
         for _ in range(inner_iters):
             x1 = np.random.randn(batch_size, in_features)

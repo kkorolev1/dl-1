@@ -36,7 +36,7 @@ class SGD(Optimizer):
             """
             gt = grad + self.weight_decay * param
             np.add(self.momentum * m, gt, out=m)
-            np.subtract(param, self.lr * gt, out=param)
+            np.subtract(param, self.lr * m, out=param)
 
 
 class Adam(Optimizer):

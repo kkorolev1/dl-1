@@ -35,7 +35,7 @@ class Sigmoid(Module):
         :param input: array of an arbitrary size
         :return: array of the same size
         """
-        return 1 / (1 + np.exp(-input))
+        return scipy.special.expit(input)
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -55,7 +55,7 @@ class Softmax(Module):
         :param input: array of size (batch_size, num_classes)
         :return: array of the same size
         """
-        return np.exp(input) / np.exp(input).sum(axis=1).reshape(-1, 1)
+        return scipy.special.softmax(input, axis=1)
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """

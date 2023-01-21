@@ -28,7 +28,7 @@ class TextDataset(Dataset):
             SentencePieceTrainer.train(
                 input=data_file, vocab_size=vocab_size,
                 model_type=model_type, model_prefix=sp_model_prefix,
-                normalization_rule_name=normalization_rule_name
+                normalization_rule_name=normalization_rule_name, pad_id=42
             )
         # load tokenizer from file
         self.sp_model = SentencePieceProcessor(model_file=sp_model_prefix + '.model')
@@ -80,6 +80,7 @@ class TextDataset(Dataset):
         """
         return len(self.indices)
 
+
     def __getitem__(self, item: int) -> Tuple[torch.Tensor, int]:
         """
         Add specials to the index array and pad to maximal length
@@ -103,4 +104,4 @@ class TextDataset(Dataset):
 
 if __name__ == '__main__':
     train_set = TextDataset(data_file='jokes.txt', train=True, sp_model_prefix='bpe')
-    print(train_set[0])
+    print(train_set.text2ids("Штирлиц забыл шляпу"))

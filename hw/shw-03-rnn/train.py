@@ -29,7 +29,8 @@ def plot_losses(train_losses: List[float], val_losses: List[float]):
     YOUR CODE HERE (⊃｡•́‿•̀｡)⊃━✿✿✿✿✿✿
     Calculate train and validation perplexities given lists of losses
     """
-    train_perplexities, val_perplexities = [], []
+    train_perplexities = torch.exp(-train_losses / len(train_losses))
+    val_perplexities = torch.exp(-val_losses / len(val_losses))
 
     axs[1].plot(range(1, len(train_perplexities) + 1), train_perplexities, label='train')
     axs[1].plot(range(1, len(val_perplexities) + 1), val_perplexities, label='val')
@@ -64,6 +65,19 @@ def training_epoch(model: LanguageModel, optimizer: torch.optim.Optimizer, crite
         call backward and make one optimizer step.
         Accumulate sum of losses for different batches in train_loss
         """
+        optimizer.zero_grad()
+
+        indices = indices[:, :lengths.max()]
+        indices = indices.to(device).long()
+        
+        logits = model(indices[:, :-1], lengths - 1)
+        
+        loss = criterion(logits.transpose(1, 2), indices[:, 1:])
+
+        train_loss += loss.item() * indices.shape[0]
+
+        loss.backward()
+        optimizer.step()
 
     train_loss /= len(loader.dataset)
     return train_loss
@@ -90,6 +104,12 @@ def validation_epoch(model: LanguageModel, criterion: nn.Module,
         Process one validation step: calculate loss.
         Accumulate sum of losses for different batches in val_loss
         """
+        indices = indices.to(device)
+        
+        logits = model(indices[:, :-1], lengths - 1)
+        loss = criterion(logits.transpose(1, 2), indices[:, 1:])
+
+        val_loss += loss.item() * indices.shape[0]
 
     val_loss /= len(loader.dataset)
     return val_loss

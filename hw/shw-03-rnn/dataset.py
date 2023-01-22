@@ -12,7 +12,7 @@ class TextDataset(Dataset):
 
     def __init__(self, data_file: str, train: bool = True, sp_model_prefix: str = None,
                  vocab_size: int = 2000, normalization_rule_name: str = 'nmt_nfkc_cf',
-                 model_type: str = 'bpe', max_length: int = 128):
+                 model_type: str = 'bpe', max_length: int = 512):
         """
         Dataset with texts, supporting BPE tokenizer
         :param data_file: txt file containing texts
@@ -33,7 +33,7 @@ class TextDataset(Dataset):
         # load tokenizer from file
         self.sp_model = SentencePieceProcessor(model_file=sp_model_prefix + '.model')
 
-        with open(data_file) as file:
+        with open(data_file, encoding='utf-8') as file:
             texts = file.readlines()
 
         """

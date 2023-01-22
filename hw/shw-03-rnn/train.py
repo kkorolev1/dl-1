@@ -29,8 +29,8 @@ def plot_losses(train_losses: List[float], val_losses: List[float]):
     YOUR CODE HERE (⊃｡•́‿•̀｡)⊃━✿✿✿✿✿✿
     Calculate train and validation perplexities given lists of losses
     """
-    train_perplexities = torch.exp(-train_losses / len(train_losses))
-    val_perplexities = torch.exp(-val_losses / len(val_losses))
+    train_perplexities = torch.exp(torch.tensor(train_losses) / len(train_losses))
+    val_perplexities = torch.exp(torch.tensor(val_losses) / len(val_losses))
 
     axs[1].plot(range(1, len(train_perplexities) + 1), train_perplexities, label='train')
     axs[1].plot(range(1, len(val_perplexities) + 1), val_perplexities, label='val')
@@ -71,7 +71,6 @@ def training_epoch(model: LanguageModel, optimizer: torch.optim.Optimizer, crite
         indices = indices.to(device).long()
         
         logits = model(indices[:, :-1], lengths - 1)
-        
         loss = criterion(logits.transpose(1, 2), indices[:, 1:])
 
         train_loss += loss.item() * indices.shape[0]
@@ -104,7 +103,8 @@ def validation_epoch(model: LanguageModel, criterion: nn.Module,
         Process one validation step: calculate loss.
         Accumulate sum of losses for different batches in val_loss
         """
-        indices = indices.to(device)
+        indices = indices[:, :lengths.max()]
+        indices = indices.to(device).long()
         
         logits = model(indices[:, :-1], lengths - 1)
         loss = criterion(logits.transpose(1, 2), indices[:, 1:])
@@ -131,6 +131,8 @@ def train(model: LanguageModel, optimizer: torch.optim.Optimizer, scheduler: Opt
     criterion = nn.CrossEntropyLoss(ignore_index=train_loader.dataset.pad_id)
 
     for epoch in range(1, num_epochs + 1):
+        print('lr: {:.4e}'.format(scheduler.optimizer.param_groups[0]['lr']))
+
         train_loss = training_epoch(
             model, optimizer, criterion, train_loader,
             tqdm_desc=f'Training {epoch}/{num_epochs}'

@@ -1,0 +1,33 @@
+datadir: data
+vocabdir: vocab
+dataset:
+  train:
+    src: train.de-en.de
+    dst: train.de-en.en
+  val:
+    src: val.de-en.de
+    dst: val.de-en.en
+  test:
+    src: test1.de-en.de
+language:
+  src: de
+  dst: en
+model:
+  num_encoder_layers: 3
+  num_decoder_layers: 3
+  embedding_dim: 512
+  num_heads: 8
+  feedforward_dim: 512
+  dropout: 0.1
+batch_size: 64
+num_workers: 4
+optimizer:
+  lr: 1e-4
+  beta1: 0.9
+  beta2: 0.98
+  eps: 1e-9
+epochs: 5
+device_ids: [0, 1, 2]
+checkpoint: 
+  dir: checkpoints
+  step: 1

@@ -104,3 +104,33 @@ def get_model(config, vocab_sizes, max_length):
                       num_enc_layers=model_config["num_encoder_layers"], num_dec_layers=model_config["num_decoder_layers"],
                       feedforward_dim=model_config["feedforward_dim"], emb_dim=model_config["embedding_dim"],
                       num_heads=model_config["num_heads"], dropout=model_config["dropout"], max_length=max_length)
+
+
+@torch.no_grad()
+def decode(model, src, src_mask, max_length, device):
+    src = src.to(device)
+    src_mask = src_mask.to(device)
+    
+    memory = model.encode(src, src_mask).to(device)
+    result = torch.full((1, 1), TextDataset.BOS_IDX).long().to(device)
+
+    for i in range(max_length - 1):
+        dst_mask = attention_mask(result.shape[1]).to(device)
+        out = model.decode(result, memory, dst_mask)
+        logits = model.head(out[:, -1, :])
+        word = logits.argmax(dim=1).item()
+        
+        result = torch.cat([result, torch.ones(1, 1).type_as(src.data).fill_(word)], dim=1)
+        
+        if word == TextDataset.EOS_IDX:
+            break
+    
+    return result
+
+@torch.no_grad()
+def translate(model, src, device):
+    model.eval()
+    length = src.shape[0]
+    src_mask = torch.zeros((length, length)).bool()
+    dst_tokens = decode(model, src.unsqueeze(dim=0), src_mask, length + 5, device)
+    return dst_tokens.squeeze(dim=0)

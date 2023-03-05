@@ -26,8 +26,9 @@ optimizer:
   beta1: 0.9
   beta2: 0.98
   eps: 1e-9
-epochs: 5
+epochs: 10
 device_ids: [0, 1, 2]
 checkpoint: 
   dir: checkpoints
   step: 1
+outputfile: prediction.txt

@@ -21,7 +21,7 @@ def get_datetime():
 class Trainer:
     def __init__(self, config, vocab_sizes, max_length, device, run_name):
         self.model = get_model(config, vocab_sizes, max_length)
-        self.model = nn.DataParallel(self.model, config["device_ids"]).to(device)
+        self.model = self.model.to(device)
 
         self.optimizer = get_optimizer(self.model, config)
         self.criterion = nn.CrossEntropyLoss(ignore_index=TextDataset.PAD_IDX)
@@ -119,8 +119,8 @@ class Trainer:
     def train(self, config, train_loader, val_loader):
         
         for epoch in range(self.cur_epoch, self.epochs):
-            train_loss = self.train_epoch(train_loader, f'Training epoch {self.cur_epoch + 1}/{self.epochs}')
-            val_loss = self.train_epoch(val_loader, f'Validating epoch {self.cur_epoch + 1}/{self.epochs}')
+            train_loss = self.train_epoch(train_loader, f'Training epoch {epoch + 1}/{self.epochs}')
+            val_loss = self.train_epoch(val_loader, f'Validating epoch {epoch + 1}/{self.epochs}')
 
             logging.info("epoch: {} train_loss: {:.5f} val_loss: {:.5f}".format(epoch + 1, train_loss, val_loss))
 
